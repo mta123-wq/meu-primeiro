@@ -1,4 +1,4 @@
-task.wait() until game:IsLoaded()
+repeat task.wait() until game:IsLoaded()
 repeat task.wait() until game.Players.LocalPlayer.Character
 
 local rs = game:GetService("ReplicatedStorage")
@@ -10,36 +10,37 @@ local unitsFolder = workspace:WaitForChild("Units")
 local lp = game.Players.LocalPlayer
 
 local nomeFarm, nomeAsaEscura = "Mestre da Grelha de Ramen", "Asa Escura"
-local farmSlot, asaEscuraSlots = 4, {1, 2, 3, 4}
-local farmPositions = {Vector3.new(-15, 0, 10), Vector3.new(5, 0, 15), Vector3.new(20, 0, -10), Vector3.new(0, 0, -15)}
-local asaEscuraPositions = {Vector3.new(-20, 0, 0), Vector3.new(15, 0, -20), Vector3.new(-5, 0, -25), Vector3.new(10, 0, 10)}
+local farmSlot = 4  -- "Mestre da Grelha de Ramen" no slot 4
+local asaEscuraSlot = 1  -- "Asa Escura" no slot 1
 
-task.wait(10)
+local farmPositions = {
+    Vector3.new(-15, 0, 10), 
+    Vector3.new(5, 0, 15),    
+    Vector3.new(20, 0, -10), 
+    Vector3.new(0, 0, -15)
+}
 
--- Função para delay aleatório entre ações
-local function randomDelay(min, max)
-    task.wait(math.random(min, max) / 100)
-end
+local asaEscuraPosition = Vector3.new(-20, 0, 0)  -- "Asa Escura" em uma posição específica
 
--- Colocar 4x "Mestre da Grelha de Ramen"
+task.wait(5)  -- Reduziu o tempo de espera inicial para 5 segundos, para velocidade 2x
+
+-- Colocar 4x "Mestre da Grelha de Ramen" no slot 4
 for _, pos in ipairs(farmPositions) do
     pcall(function() placeUnit:InvokeServer(farmSlot, pos) end)
-    randomDelay(500, 1500)  -- delay entre 0.5s a 1.5s
+    task.wait(0.5)  -- Reduzido pela metade para 0.5s (velocidade 2x)
 end
 
--- Colocar 4x "Asa Escura"
-for i, slot in ipairs(asaEscuraSlots) do
-    pcall(function() placeUnit:InvokeServer(slot, asaEscuraPositions[i]) end)
-    randomDelay(500, 1500)
-end
+-- Colocar 1x "Asa Escura" no slot 1
+pcall(function() placeUnit:InvokeServer(asaEscuraSlot, asaEscuraPosition) end)
+task.wait(0.5)  -- Reduzido pela metade para 0.5s (velocidade 2x)
 
 -- Upgrades iniciais para "Asa Escura"
-task.wait(3)
+task.wait(1.5)  -- Reduzido para 1.5s, que é metade de 3s
 for _, unit in ipairs(unitsFolder:GetChildren()) do
     if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
         pcall(function() 
             upgradeUnit:InvokeServer(unit)
-            randomDelay(300, 700)  -- Delay entre os upgrades (300ms a 700ms)
+            task.wait(0.25)  -- Reduzido para 250ms (velocidade 2x)
             upgradeUnit:InvokeServer(unit)
         end)
     end
@@ -47,13 +48,12 @@ end
 
 -- Upgrade contínuo do "Mestre da Grelha de Ramen"
 task.spawn(function()
-    while task.wait(3) do
+    while task.wait(1.5) do  -- Reduzido para 1.5s (velocidade 2x)
         for _, unit in ipairs(unitsFolder:GetChildren()) do
             if unit.Owner.Value == lp and unit.Name == nomeFarm then
                 pcall(function() 
                     upgradeUnit:InvokeServer(unit)
                 end)
-                randomDelay(200, 500)  -- Delay de 200ms a 500ms
             end
         end
     end
@@ -61,14 +61,13 @@ end)
 
 -- Upgrade contínuo das "Asas Escura" após 45s
 task.spawn(function()
-    task.wait(45)
-    while task.wait(3) do
+    task.wait(22.5)  -- Reduzido para 22.5s, que é metade de 45s (velocidade 2x)
+    while task.wait(1.5) do  -- Reduzido para 1.5s entre upgrades (velocidade 2x)
         for _, unit in ipairs(unitsFolder:GetChildren()) do
             if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
                 pcall(function() 
                     upgradeUnit:InvokeServer(unit)
                 end)
-                randomDelay(200, 500)  -- Delay entre upgrades de 200ms a 500ms
             end
         end
     end
@@ -76,14 +75,14 @@ end)
 
 -- Ativar habilidades das "Asa Escura" (espaciado aleatoriamente)
 task.spawn(function()
-    while task.wait(15) do
+    while task.wait(7.5) do  -- Reduzido para 7.5s (metade de 15s)
         for _, unit in ipairs(unitsFolder:GetChildren()) do
             if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
                 if unit:FindFirstChild("HumanoidRootPart") then
                     pcall(function() 
                         activateSkill:FireServer(unit)
                     end)
-                    randomDelay(1000, 2000)  -- Delay de 1s a 2s entre habilidades
+                    task.wait(math.random(500, 1000) / 1000)  -- Delay reduzido para 500ms a 1s
                 end
             end
         end
@@ -92,10 +91,10 @@ end)
 
 -- Skip Wave (executar de forma mais espaçada)
 task.spawn(function()
-    while task.wait(10) do
+    while task.wait(5) do  -- Reduzido para 5s entre skips (velocidade 2x)
         pcall(function()
             skipWave:FireServer()
         end)
-        randomDelay(2000, 4000)  -- Delay de 2s a 4s entre skips
+        task.wait(math.random(1000, 2000) / 1000)  -- Delay reduzido para 1s a 2s entre skips
     end
 end)
