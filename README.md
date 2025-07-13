@@ -9,92 +9,116 @@ local skipWave = rs.Remote:FindFirstChild("SkipWave")
 local unitsFolder = workspace:WaitForChild("Units")
 local lp = game.Players.LocalPlayer
 
-local nomeFarm, nomeAsaEscura = "Mestre da Grelha de Ramen", "Asa Escura"
-local farmSlot = 4  -- "Mestre da Grelha de Ramen" no slot 4
-local asaEscuraSlot = 1  -- "Asa Escura" no slot 1
+local nomeFarm = "Mestre da Grelha de Ramen"
+local nomeAsaEscura = "Asa Escura"
+local farmSlot = 4
+local asaEscuraSlot = 1
 
 local farmPositions = {
-    Vector3.new(-15, 0, 10), 
-    Vector3.new(5, 0, 15),    
-    Vector3.new(20, 0, -10), 
+    Vector3.new(-15, 0, 10),
+    Vector3.new(5, 0, 15),
+    Vector3.new(20, 0, -10),
     Vector3.new(0, 0, -15)
 }
 
-local asaEscuraPosition = Vector3.new(-20, 0, 0)  -- "Asa Escura" em uma posição específica
+local asaEscuraPosition = Vector3.new(-20, 0, 0)
 
-task.wait(3.33)  -- Reduziu o tempo de espera inicial para 1/3 do original (3.33s para simular 3x de velocidade)
+-- Função para colocar as unidades nos slots
+local function colocarUnidades()
+    -- Colocar "Mestre da Grelha de Ramen"
+    for _, pos in ipairs(farmPositions) do
+        pcall(function() placeUnit:InvokeServer(farmSlot, pos) end)
+    end
 
--- Colocar 4x "Mestre da Grelha de Ramen" no slot 4
-for _, pos in ipairs(farmPositions) do
-    pcall(function() placeUnit:InvokeServer(farmSlot, pos) end)
-    task.wait(0.33)  -- Reduzido para 1/3 do tempo original (0.33s)
+    -- Colocar "Asa Escura"
+    pcall(function() placeUnit:InvokeServer(asaEscuraSlot, asaEscuraPosition) end)
 end
 
--- Colocar 1x "Asa Escura" no slot 1
-pcall(function() placeUnit:InvokeServer(asaEscuraSlot, asaEscuraPosition) end)
-task.wait(0.33)  -- Reduzido para 1/3 do tempo original (0.33s)
-
--- Upgrades iniciais para "Asa Escura"
-task.wait(1)  -- Reduzido para 1s (1/3 do tempo original de 3s)
-for _, unit in ipairs(unitsFolder:GetChildren()) do
-    if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
-        pcall(function() 
-            upgradeUnit:InvokeServer(unit)
-            task.wait(0.17)  -- Reduzido para 1/3 do tempo original (170ms)
-            upgradeUnit:InvokeServer(unit)
-        end)
-    end
-end
-
--- Upgrade contínuo do "Mestre da Grelha de Ramen"
-task.spawn(function()
-    while task.wait(1) do  -- Reduzido para 1s (1/3 do tempo original de 3s)
+-- Função para fazer o upgrade das unidades
+local function upgradeUnidades()
+    while true do
         for _, unit in ipairs(unitsFolder:GetChildren()) do
-            if unit.Owner.Value == lp and unit.Name == nomeFarm then
-                pcall(function() 
-                    upgradeUnit:InvokeServer(unit)
-                end)
-            end
-        end
-    end
-end)
-
--- Upgrade contínuo das "Asas Escura" após 45s
-task.spawn(function()
-    task.wait(15)  -- Reduzido para 1/3 do tempo original de 45s
-    while task.wait(1) do  -- Reduzido para 1s entre upgrades
-        for _, unit in ipairs(unitsFolder:GetChildren()) do
-            if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
-                pcall(function() 
-                    upgradeUnit:InvokeServer(unit)
-                end)
-            end
-        end
-    end
-end)
-
--- Ativar habilidades das "Asa Escura" (espaciado aleatoriamente)
-task.spawn(function()
-    while task.wait(5) do  -- Reduzido para 5s (1/3 do tempo original de 15s)
-        for _, unit in ipairs(unitsFolder:GetChildren()) do
-            if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
-                if unit:FindFirstChild("HumanoidRootPart") then
-                    pcall(function() 
-                        activateSkill:FireServer(unit)
+            if unit.Owner.Value == lp then
+                -- Upgrade de "Mestre da Grelha de Ramen"
+                if unit.Name == nomeFarm then
+                    pcall(function()
+                        upgradeUnit:InvokeServer(unit)
                     end)
-                    task.wait(math.random(333, 666) / 1000)  -- Delay reduzido para 333ms a 666ms (1/3 do tempo original)
+                -- Upgrade de "Asa Escura"
+                elseif unit.Name == nomeAsaEscura then
+                    pcall(function()
+                        upgradeUnit:InvokeServer(unit)
+                    end)
                 end
             end
         end
     end
-end)
+end
 
--- Skip Wave (executar de forma mais espaçada)
-task.spawn(function()
-    while task.wait(3.33) do  -- Reduzido para 3.33s entre skips (1/3 do tempo original de 10s)
+-- Função para ativar as habilidades das "Asas Escura"
+local function ativarHabilidadesAsaEscura()
+    while true do
+        for _, unit in ipairs(unitsFolder:GetChildren()) do
+            if unit.Owner.Value == lp and unit.Name == nomeAsaEscura then
+                if unit:FindFirstChild("HumanoidRootPart") then
+                    pcall(function()
+                        activateSkill:FireServer(unit)
+                    end)
+                end
+            end
+        end
+    end
+end
+
+-- Função para pular ondas
+local function skipWaveFunc()
+    while true do
         pcall(function()
             skipWave:FireServer()
         end)
-        task.wait(math.random(667, 1333) / 1000)  -- Delay reduzido para 667ms a 1.33s entre skips (1/3 do tempo original)
     end
-end)
+end
+
+-- Função para auto-start (colocar as unidades e iniciar as funções de upgrades e habilidades)
+local function autoStart()
+    -- Aguardar o jogo carregar completamente
+    task.wait(3)  -- Espera 3 segundos para garantir que o jogo carregue antes de colocar as unidades
+
+    -- Colocar as unidades nos slots
+    colocarUnidades()
+
+    -- Iniciar os upgrades das unidades
+    task.spawn(upgradeUnidades)
+
+    -- Ativar as habilidades das "Asas Escura"
+    task.spawn(ativarHabilidadesAsaEscura)
+
+    -- Iniciar o pular ondas
+    task.spawn(skipWaveFunc)
+end
+
+-- Função para auto-replay (reiniciar a rodada após o término de uma wave)
+local function autoReplay()
+    while true do
+        -- Verificar se a wave foi finalizada
+        task.wait(5)  -- Espera 5 segundos entre as verificações de novas ondas
+        if game.ReplicatedStorage:FindFirstChild("WaveInProgress") == nil then
+            -- Reiniciar tudo quando a wave terminar
+            pcall(function() skipWave:FireServer() end)
+            task.wait(1)  -- Aguardar um pouco para reiniciar
+            autoStart()  -- Chama a função autoStart novamente
+        end
+    end
+end
+
+-- Função principal que irá controlar o fluxo do script
+local function executarScript()
+    -- Iniciar o auto-start
+    task.spawn(autoStart)
+
+    -- Iniciar o auto-replay
+    task.spawn(autoReplay)
+end
+
+-- Executa o script
+executarScript()
